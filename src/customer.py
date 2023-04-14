@@ -20,25 +20,43 @@ class CustomerMenu(Menu):
                         {"description": "Login", "action": self.loginCustomer},
                 ], title="If you are already our Customer, you can login to our Rental App.\nIf not, please register first.")
                 return None
-        def registerCustomer(self) -> None:
-                username = input("username: ")
-                password = input("password: ")
-                full_name = input("full_name: ")
-                date_of_birth = input("date_of_birth(dd/mm/yyyy): ")
-                email = input("email: ")
-                customer = (username, password, full_name, date_of_birth, email)
-                list = Query.selectCustomer((username, password))
-                if len(list) == 0: #finding the unique customer
-                        if '.' in email and '@' in email: #check validity of email
-                                Query.insertCustomer(customer)
-                                print("You have successfully registered in our Rental Car System")
-                                print("Do you want to login?")
-                                self.loginCustomer()
+        def checkUniqueCustomer(self) -> str:
+                while True:
+                        self.username = input("username: ")
+                        self.password = input("password: ")
+                        self.full_name = input("full_name: ")
+                        list = Query.selectCustomer((self.username, self.password))   
+                        if len(list) == 0:     
+                                break
+                        print("Try another username! The username is already taken.\n")
+                return self.username, self.password, self.full_name
+        def checkDateFormat(self) -> str:
+                while True:
+                        try:
+                                format = "%d-%m-%Y"
+                                self.date_of_birth = input("date_of_birth(dd-mm-yyyy): ")
+                                self.date_of_birth = dt.datetime.strptime(self.date_of_birth, format)
+                                break
+                        except ValueError:
+                                print("Please enter the correct datetime Output!\n")
+                return self.date_of_birth 
+        def checkEmail(self) -> str:
+                while True:
+                        self.email = input("email: ")
+                        if '.' in self.email and '@' in self.email:
+                                break
                         else:
-                                print("Invalid email address.")
-                else:
-                        print("Try another username! The username is already taken.")
-                        self.loginCustomer()
+                                print("Invalid email address.\n")
+                return self.email   
+        def registerCustomer(self) -> None:           
+                username, password, full_name = self.checkUniqueCustomer()
+                date_of_birth = self.checkDateFormat()
+                email = self.checkEmail()
+                customer = (username, password, full_name, date_of_birth, email)
+                Query.insertCustomer(customer)
+                print("You have successfully registered in our Rental Car System\n")
+                print("Do you want to login?")
+                self.loginCustomer()                                                
                 return None
         def loginCustomer(self) -> None:
                 while True:
@@ -61,8 +79,6 @@ class Customer(Menu):
         date_of_birth: str
         due_payment: float
         starting_customer_amount: float
-        current_time: object
-
         def __init__(self, full_name: str, date_of_birth: str, due_payment: float = 0) -> None:
                 super().__init__(options=[
                         {"description": "Available Car list","action": self.listAvailableCar},
@@ -107,7 +123,7 @@ class Customer(Menu):
                                         Query.insertRent(car)
                                 else:
                                         print('Car already rented')                                         
-                        Customer(self.full_name, self.date_of_birth, self.due_payment).start()
+                Customer(self.full_name, self.date_of_birth, self.due_payment).start()
                 return None
 
         def report(self)-> None:
@@ -126,20 +142,16 @@ class Customer(Menu):
                 return None
 
         def customer_check(self,b_day)-> bool:
-                try:
-                        day, month, year = b_day.split('/')
-                        bday = dt.date(int(year), int(month), int(day))
-                        age = dt.datetime.now().year - int(bday.year)
-                        if age > 100:
-                                print('Age limit exceeded')
-                                return False
-                        elif age < 18:
-                                print('You must be 18 years and above to rent a car')
-                                return False
-                        else:
-                                return True
-                except ValueError:
-                        print('Incorrect date format')
+                birth_year = int(b_day[:4])
+                age = dt.datetime.now().year - birth_year 
+                if age > 100:
+                        print('Age limit exceeded')
+                        return False
+                elif age < 18:
+                        print('You must be 18 years and above to rent a car')
+                        return False
+                else:
+                        return True
 
         def returnCar(self)-> None:
                 self.return_reg = str(input('Please input the car registration number: '))
@@ -159,7 +171,7 @@ class Customer(Menu):
                                 self.looping = True
                                 break
                 if self.looping == False:
-                        print('Incorrect Input')
+                        print("You haven't rent this car!")
                 Customer(self.full_name, self.date_of_birth, self.due_payment).start()
                 return None
         def payment(self)-> None:

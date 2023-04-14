@@ -43,7 +43,7 @@ class Employer(Menu):
                         price_per_day = int(input("Enter the  Price per day: "))
                         properties = input("Enter the Properties: ")
                         result = (registrationNum, model, price_per_day, properties, 1, self.full_name)
-                        Query("car", columns= self.car_cols, parameters=result).insertQuery()
+                        Query.insertCar(result)
                         print("\nYou have successfully added the follwing car available car in Rental Car System")
                         print(f"Registration Number: {registrationNum}", f"Model: {model}", f"Price per day: {price_per_day}", f'Properties: {properties}', sep='\n')
                         Employer(self.full_name).start()
